@@ -29,7 +29,7 @@ export default function AlertsPage() {
     if (data) setAlerts(prev => [data, ...prev]);
     setShowForm(false);
     setForm({ title: "", message: "", severity: "medium", affected_area: "" });
-      await fetch(/api/alerts/broadcast, { method: "POST", body: JSON.stringify({ title: form.title, message: form.message }) });
+      await fetch("/api/alerts/broadcast", { method: "POST", body: JSON.stringify({ title: form.title, message: form.message }) });
     setSaving(false);
   }
 
