@@ -99,14 +99,18 @@ export default function IncidentDetail({ params }: { params: Promise<{ id: strin
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-800 mb-4">Photo Evidence</h2>
             {incident.photo_url ? (
-              <a href={incident.photo_url} target="_blank" rel="noopener noreferrer" className="relative group block overflow-hidden cursor-zoom-in rounded-xl">
-                <img src={incident.photo_url} alt="Damage" className="w-full h-auto object-cover max-h-96" />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <p className="text-white font-bold flex items-center gap-2"><Maximize2 size={20} /> Click to View Full Size</p>
-                </div>
-              </a>
+              <div className="grid grid-cols-2 gap-3">
+                {incident.photo_url.split(",").map((url, i) => (
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="relative group block overflow-hidden cursor-zoom-in rounded-xl bg-slate-100 border border-slate-200">
+                    <img src={url} alt={`Damage ${i+1}`} className="w-full h-48 object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <p className="text-white font-bold flex items-center gap-2"><Maximize2 size={20} /></p>
+                    </div>
+                  </a>
+                ))}
+              </div>
             ) : (
-              <div className="w-full h-48 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400">No photo uploaded</div>
+              <div className="w-full h-48 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400">No photos uploaded</div>
             )}
           </div>
 
