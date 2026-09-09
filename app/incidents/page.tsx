@@ -33,13 +33,22 @@ export default function IncidentsPage() {
   function exportToCSV() {
     const headers = [
       "ID", "Date Reported", "Status", "Victim Name", "Contact Number", 
-      "Aadhaar Number", "Address", "Damage Type", "Damage Details", 
+      "Aadhaar Number", "Address", "Damage Type", "Affected Categories", "Damage Details", 
       "Compensation Amount", "Rejection Reason", "Latitude", "Longitude", "Photos"
     ];
 
     const rows = filteredIncidents.map(inc => {
       const date = new Date(inc.created_at).toLocaleString("en-IN");
       const escape = (text: string | null | undefined) => `"${(text || "").toString().replace(/"/g, '""')}"`;
+      
+      let affectedCats = "None Selected";
+      let pureDetails = inc.damage_details || "";
+      
+      if (pureDetails.startsWith("Affected Categories: ")) {
+         const parts = pureDetails.split("\n\n");
+         affectedCats = parts[0].replace("Affected Categories: ", "").trim();
+         pureDetails = parts.slice(1).join("\n\n").trim();
+      }
       
       return [
         inc.id,
@@ -50,7 +59,8 @@ export default function IncidentsPage() {
         `"=""${inc.aadhaar_number || ""}"""`,
         escape(inc.address),
         escape(inc.damage_type),
-        escape(inc.damage_details),
+        escape(affectedCats),
+        escape(pureDetails),
         inc.compensation_amount || "0",
         escape(inc.rejection_reason),
         inc.latitude || "",
