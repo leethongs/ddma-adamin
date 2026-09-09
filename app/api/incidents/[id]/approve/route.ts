@@ -6,10 +6,14 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlma3Zmcmx5emR4Z2dhbWlpZXZ0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODkyNjczNCwiZXhwIjoyMTA0NTAyNzM0fQ.W-XYcsx6417xUwd7kFxPkv5sXgT95ETnUMr4x5k5ZWI"
 );
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { error } = await supabase.from("incidents").update({
-    status: "approved", reviewed_by: "Admin", reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString()
-  }).eq("id", params.id);
+    status: "approved",
+    reviewed_by: "Admin",
+    reviewed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
