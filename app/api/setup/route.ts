@@ -16,5 +16,6 @@ export async function GET() {
       ]);
     }
   } catch {}
+  await supabase.rpc("exec_sql", { query: "CREATE TABLE IF NOT EXISTS public.subscriptions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), endpoint TEXT UNIQUE NOT NULL, keys_auth TEXT NOT NULL, keys_p256dh TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT now()); GRANT ALL ON public.subscriptions TO anon, authenticated;" });
   return NextResponse.json({ ok: true, message: "Tables ready." });
 }
