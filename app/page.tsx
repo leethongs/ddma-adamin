@@ -1,69 +1,135 @@
-import Image from "next/image";
+﻿"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Incident, Alert } from "@/lib/types";
+import { StatCard } from "@/components/StatCard";
+import { StatusBadge } from "@/components/StatusBadge";
+import { FileText, AlertTriangle, CheckCircle, XCircle, Clock, Package, Bell } from "lucide-react";
+import Link from "next/link";
 
-export default function Home() {
+export default function Dashboard() {
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [setupDone, setSetupDone] = useState(false);
+
+  useEffect(() => {
+    async function init() {
+      // Auto-setup tables on first load
+      if (!setupDone) {
+        await fetch("/api/setup");
+        setSetupDone(true);
+      }
+      const [{ data: inc }, { data: al }] = await Promise.all([
+        supabase.from("incidents").select("*").order("created_at", { ascending: false }),
+        supabase.from("alerts").select("*").eq("is_active", true),
+      ]);
+      setIncidents(inc ?? []);
+      setAlerts(al ?? []);
+      setLoading(false);
+    }
+    init();
+  }, []);
+
+  const total = incidents.length;
+  const pending = incidents.filter(i => i.status === "pending").length;
+  const approved = incidents.filter(i => i.status === "approved").length;
+  const rejected = incidents.filter(i => i.status === "rejected").length;
+  const under_review = incidents.filter(i => i.status === "under_review").length;
+  const recent = incidents.slice(0, 8);
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-8" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 h-24 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-1">District Disaster Management Authority — Overview</p>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <StatCard label="Total Incidents" value={total} icon={FileText} color="bg-blue-50 text-blue-600" />
+        <StatCard label="Pending Review" value={pending} icon={Clock} color="bg-yellow-50 text-yellow-600" />
+        <StatCard label="Under Review" value={under_review} icon={AlertTriangle} color="bg-indigo-50 text-indigo-600" />
+        <StatCard label="Approved" value={approved} icon={CheckCircle} color="bg-green-50 text-green-600" />
+        <StatCard label="Rejected" value={rejected} icon={XCircle} color="bg-red-50 text-red-600" />
+        <StatCard label="Active Alerts" value={alerts.length} icon={Bell} color="bg-orange-50 text-orange-600" />
+      </div>
+
+      {alerts.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">🚨 Active Alerts</h2>
+          <div className="space-y-2">
+            {alerts.map(alert => (
+              <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-xl border-l-4 bg-white shadow-sm ${
+                alert.severity === "critical" ? "border-red-500" :
+                alert.severity === "high" ? "border-orange-500" :
+                alert.severity === "medium" ? "border-yellow-500" : "border-gray-400"
+              }`}>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800">{alert.title}</p>
+                  <p className="text-sm text-gray-500">{alert.message}</p>
+                  {alert.affected_area && <p className="text-xs text-gray-400 mt-1">📍 {alert.affected_area}</p>}
+                </div>
+                <StatusBadge status={alert.severity} />
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-gray-700">Recent Incidents</h2>
+          <Link href="/incidents" className="text-sm text-orange-500 hover:underline font-medium">View all →</Link>
         </div>
-      </main>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          {recent.length === 0 ? (
+            <div className="p-12 text-center text-gray-400">
+              <FileText size={40} className="mx-auto mb-3 opacity-30" />
+              <p>No incidents yet. Sample data was seeded — refresh if needed.</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                <tr>
+                  <th className="px-4 py-3 text-left">Victim</th>
+                  <th className="px-4 py-3 text-left">Damage Type</th>
+                  <th className="px-4 py-3 text-left">Location</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Date</th>
+                  <th className="px-4 py-3 text-left">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {recent.map(inc => (
+                  <tr key={inc.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-800">{inc.victim_name}<br /><span className="text-xs text-gray-400">{inc.contact_number}</span></td>
+                    <td className="px-4 py-3 text-gray-600 capitalize">{inc.damage_type}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{inc.location_address ?? `${inc.latitude?.toFixed(4)}, ${inc.longitude?.toFixed(4)}`}</td>
+                    <td className="px-4 py-3"><StatusBadge status={inc.status} /></td>
+                    <td className="px-4 py-3 text-gray-400 text-xs">{new Date(inc.created_at).toLocaleDateString("en-IN")}</td>
+                    <td className="px-4 py-3">
+                      <Link href={`/incidents/${inc.id}`} className="text-orange-500 hover:underline font-medium text-xs">View →</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
