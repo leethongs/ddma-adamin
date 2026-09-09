@@ -1,25 +1,19 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Incident, Alert } from "@/lib/types";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { FileText, AlertTriangle, CheckCircle, XCircle, Clock, Package, Bell } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock, Bell, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 export default function Dashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [setupDone, setSetupDone] = useState(false);
 
   useEffect(() => {
-    async function init() {
-      // Auto-setup tables on first load
-      if (!setupDone) {
-        await fetch("/api/setup");
-        setSetupDone(true);
-      }
+    async function load() {
       const [{ data: inc }, { data: al }] = await Promise.all([
         supabase.from("incidents").select("*").order("created_at", { ascending: false }),
         supabase.from("alerts").select("*").eq("is_active", true),
@@ -28,7 +22,7 @@ export default function Dashboard() {
       setAlerts(al ?? []);
       setLoading(false);
     }
-    init();
+    load();
   }, []);
 
   const total = incidents.length;
@@ -42,7 +36,7 @@ export default function Dashboard() {
     return (
       <div className="p-8">
         <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-8" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 h-24 animate-pulse" />
           ))}
@@ -69,7 +63,7 @@ export default function Dashboard() {
 
       {alerts.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">🚨 Active Alerts</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">Active Alerts</h2>
           <div className="space-y-2">
             {alerts.map(alert => (
               <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-xl border-l-4 bg-white shadow-sm ${
@@ -80,7 +74,7 @@ export default function Dashboard() {
                 <div className="flex-1">
                   <p className="font-semibold text-gray-800">{alert.title}</p>
                   <p className="text-sm text-gray-500">{alert.message}</p>
-                  {alert.affected_area && <p className="text-xs text-gray-400 mt-1">📍 {alert.affected_area}</p>}
+                  {alert.affected_area && <p className="text-xs text-gray-400 mt-1">{alert.affected_area}</p>}
                 </div>
                 <StatusBadge status={alert.severity} />
               </div>
@@ -98,7 +92,7 @@ export default function Dashboard() {
           {recent.length === 0 ? (
             <div className="p-12 text-center text-gray-400">
               <FileText size={40} className="mx-auto mb-3 opacity-30" />
-              <p>No incidents yet. Sample data was seeded — refresh if needed.</p>
+              <p>No incidents reported yet.</p>
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -117,11 +111,11 @@ export default function Dashboard() {
                   <tr key={inc.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-800">{inc.victim_name}<br /><span className="text-xs text-gray-400">{inc.contact_number}</span></td>
                     <td className="px-4 py-3 text-gray-600 capitalize">{inc.damage_type}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{inc.location_address ?? `${inc.latitude?.toFixed(4)}, ${inc.longitude?.toFixed(4)}`}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{inc.location_address ?? "—"}</td>
                     <td className="px-4 py-3"><StatusBadge status={inc.status} /></td>
                     <td className="px-4 py-3 text-gray-400 text-xs">{new Date(inc.created_at).toLocaleDateString("en-IN")}</td>
                     <td className="px-4 py-3">
-                      <Link href={`/incidents/${inc.id}`} className="text-orange-500 hover:underline font-medium text-xs">View →</Link>
+                      <Link href={"/incidents/" + inc.id} className="text-orange-500 hover:underline font-medium text-xs">View →</Link>
                     </td>
                   </tr>
                 ))}
