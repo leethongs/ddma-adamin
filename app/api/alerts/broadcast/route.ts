@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         webpush.sendNotification({
           endpoint: sub.endpoint,
           keys: { auth: sub.keys_auth, p256dh: sub.keys_p256dh }
-        }, JSON.stringify(payload)).catch(e => {
+        }, JSON.stringify(payload)).catch((e: any) => {
           if (e.statusCode === 410 || e.statusCode === 404) {
             supabase.from("subscriptions").delete().eq("id", sub.id).then();
           }
