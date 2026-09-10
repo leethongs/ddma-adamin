@@ -87,16 +87,14 @@ export default function IncidentDetail({ params }: { params: Promise<{ id: strin
               )}
             </div>
             <p className="text-gray-700 flex items-start gap-2 mb-4"><MapPin className="text-red-500 flex-shrink-0" /> {incident.address}</p>
+            {incident.video_url && (
+              <div className="mt-8 mb-8">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Incident Video</h3>
+                <video src={incident.video_url} controls className="w-full max-w-2xl rounded-xl border border-slate-200 shadow-sm" />
+              </div>
+            )}
             {incident.latitude && incident.longitude ? (
-              
-          {incident.video_url && (
-            <div className="mt-8 mb-8">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Incident Video</h3>
-              <video src={incident.video_url} controls className="w-full max-w-2xl rounded-xl border border-slate-200 shadow-sm" />
-            </div>
-          )}
-
-          <iframe className="w-full h-64 rounded-xl border border-gray-200" src={`https://www.openstreetmap.org/export/embed.html?bbox=${incident.longitude-0.01},${incident.latitude-0.01},${incident.longitude+0.01},${incident.latitude+0.01}&layer=mapnik&marker=${incident.latitude},${incident.longitude}`} />
+              <iframe className="w-full h-64 rounded-xl border border-gray-200" src={`https://www.openstreetmap.org/export/embed.html?bbox=${incident.longitude-0.01},${incident.latitude-0.01},${incident.longitude+0.01},${incident.latitude+0.01}&layer=mapnik&marker=${incident.latitude},${incident.longitude}`} />
             ) : (
               <div className="w-full h-64 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400">No GPS coordinates available</div>
             )}
