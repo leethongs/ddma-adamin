@@ -14,6 +14,7 @@ export interface Incident {
   damage_type: string;
   damage_details?: string;
   photo_url?: string;
+  video_url?: string;
   latitude?: number;
   longitude?: number;
   location_address?: string;
